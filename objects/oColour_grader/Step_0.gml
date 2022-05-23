@@ -74,7 +74,7 @@ if (imguigml_begin_combo("##select_premade", _struct.name))
 {
 	
 	var _num = array_length(colour_grading_array);
-	trace(_num);
+
 	for (var _i = 0; _i < _num; _i++)
 	{
 		var _input = imguigml_selectable(colour_grading_array[_i].name); 
