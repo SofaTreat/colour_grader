@@ -1,8 +1,7 @@
  BASIC DOCUMENTATION
 
  oColour_grader needs ImGuiGML to work. If you don't have it already and its not included in this package, you can find it for free online :)
- Rousr makes ImGuiGML.
-****
+
  How to use!
 
 Drag oColour_grader into your room in the room editor.
@@ -20,9 +19,9 @@ frostmore
 vampireholiday
 
 
+
  press F1 to access the editing box.
 
-*****
 FUNCTIONS
 colour_grader_draw(_filter_name,[_surface], [_x], [_y])
 Takes the name of the filter as a string.
