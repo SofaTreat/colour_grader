@@ -5,20 +5,24 @@ function __colour_grader_init()
 	
 	var _colour_grader = 
 	{
-		lut_tex				 : shader_get_sampler_index(sh_lut_draw, "lut_tex"),
-		lut_strength		 : shader_get_uniform(sh_lut_draw, "strength"),
-		strength      		 : shader_get_uniform(sh_colour_grader, "strength"),
-		exposure      		 : shader_get_uniform(sh_colour_grader, "exposure"),
-		contrast        	 : shader_get_uniform(sh_colour_grader, "contrast"),
-		saturation      	 : shader_get_uniform(sh_colour_grader, "saturation"),
-		lut_color_filter	 : shader_get_uniform(sh_colour_grader, "color_filter"),
-		lut_vfx_shadows		 : shader_get_uniform(sh_colour_grader, "shadows"),
-		lut_vfx_midtones	 : shader_get_uniform(sh_colour_grader, "midtones"),
-		lut_vfx_hightlights	 : shader_get_uniform(sh_colour_grader, "highlights"),
-		lut_vfx_SMHranges	 : shader_get_uniform(sh_colour_grader, "SMHranges"),
-		filters              : _filters,
-		selected_filter      : "",
-		editing              : false,
+		lut_tex					: shader_get_sampler_index(sh_lut_draw, "lut_tex"),
+		lut_strength			: shader_get_uniform(sh_lut_draw, "strength"),
+		strength      			: shader_get_uniform(sh_colour_grader, "strength"),
+		exposure      			: shader_get_uniform(sh_colour_grader, "exposure"),
+		contrast        		: shader_get_uniform(sh_colour_grader, "contrast"),
+		saturation      		: shader_get_uniform(sh_colour_grader, "saturation"),
+		lut_color_filter		: shader_get_uniform(sh_colour_grader, "color_filter"),
+		lut_vfx_shadows			: shader_get_uniform(sh_colour_grader, "shadows"),
+		lut_vfx_midtones		: shader_get_uniform(sh_colour_grader, "midtones"),
+		lut_vfx_hightlights		: shader_get_uniform(sh_colour_grader, "highlights"),
+		lut_vfx_SMHranges		: shader_get_uniform(sh_colour_grader, "SMHranges"),
+		filters             	: _filters,
+		selected_filter     	: "",
+		editing             	: false,
+		create_new_filter   	: false,
+		create_new_filter_name  : "",
+		delete_current_filter   : false,
+		change_filter_name      : false,
 	}
 	
 	global.__colour_grader_data_struct = _colour_grader;
@@ -62,18 +66,24 @@ function __colour_grader_load_file()
 	}
 	else
 	{
-		var _filters = 
+		var _file = working_directory + "premade_filters.data";
+		if (file_exists(_file))
 		{
-			first_filter : __colour_grader_create_default_filter("first_filter"),
+			//need to check for NULL or an empty file here.
+			var _buffer = buffer_load(_file);
+			var _string = buffer_read( _buffer, buffer_string);
+			buffer_delete(_buffer);
+			var _filters = json_parse(_string);
 		}
-
-	}
-	/*
-			var _filters = 
+		else
 		{
-			first_filter : __colour_grader_create_default_filter("first_filter"),
-		}*/
-	
+			var _filters = 
+			{
+				first_filter : __colour_grader_create_default_filter("first_filter"),
+			}
+		}
+	}
+
 	return _filters;
 }
 
@@ -132,14 +142,13 @@ function  __colour_grader_create_default_filter(_name)
 
 /// @param _filter_name  The name of the filter that you want to draw.  
 /// @param [_surface] The surface which you want to apply the filter too. Default is the appication_surface.  
-/// @param [_x]   
-/// @param [_y]  
+/// @param [_x]   the x position to draw the surface at. 
+/// @param [_y]   the y position to draw the surface at. 
 
 function colour_grader_draw(_filter_name, _surface = application_surface, _x = 0, _y = 0)
 {
-	
-	
-	if (!is_struct(global.__colour_grader_data_struct))
+	if (!variable_global_exists("__colour_grader_data_struct"))
+	or (!is_struct(global.__colour_grader_data_struct))
 	{
 		__colour_grader_init();
 	}
@@ -151,10 +160,17 @@ function colour_grader_draw(_filter_name, _surface = application_surface, _x = 0
 		_filter_name = _struct.selected_filter;
 	}
 	
+	//tests to see if this struct is a valid filter, hopefully throws a useful error.
+	if(!is_struct(_struct.filters[$ _filter_name]))
+	{
+		 __colour_grader_trace_filter_names();	
+		throw ("Invalid filter name string: A list of valid filter names has been printed in output log."); 
+	}
+	
 	var _filter = _struct.filters[$ _filter_name];
 	
 	shader_set(sh_colour_grader);
-	shader_set_uniform_f(_struct.strength, _filter.strength);
+	shader_set_uniform_f(_struct.strength, _filter.strength); 
 	shader_set_uniform_f(_struct.exposure, _filter.exposure_level);
 	shader_set_uniform_f(_struct.contrast, _filter.contrast_level);
 	shader_set_uniform_f(_struct.saturation, _filter.saturation_level);
@@ -169,10 +185,52 @@ function colour_grader_draw(_filter_name, _surface = application_surface, _x = 0
 
 //==============================================================================
 
+function __colour_grader_trace_filter_names()
+{
+	if (!variable_global_exists("__colour_grader_data_struct"))
+	or (!is_struct(global.__colour_grader_data_struct))
+	{
+		__colour_grader_init();
+	}
+	
+	show_debug_message("************");
+	show_debug_message("FILTER NAMES");
+	show_debug_message("************");
+	
+	var _names = variable_struct_get_names(global.__colour_grader_data_struct.filters);
+	var _num = array_length(_names);
+	for (var _i = 0; _i < _num; _i++)
+	{
+		show_debug_message(_names[_i]);
+	}
+	
+	show_debug_message("************");
+}
+
+//==============================================================================
+
 function colour_grader_lut_draw(_filter_name, _surface = application_surface, _x = 0, _y = 0)
 {
-
+	if (!variable_global_exists("__colour_grader_data_struct"))
+	or (!is_struct(global.__colour_grader_data_struct))
+	{
+		__colour_grader_init();
+	}
+	
 	var _struct = global.__colour_grader_data_struct;
+	
+	if(_struct.editing)
+	{
+		_filter_name = _struct.selected_filter;
+	}
+	
+	//tests to see if this struct is a valid filter, hopefully throws a useful error.
+	if(!is_struct(_struct.filters[$ _filter_name]))
+	{
+		 __colour_grader_trace_filter_names();	
+		throw ("Invalid filter name string: A list of valid filter names has been printed in output log."); 
+	}
+	
 	var _filter = _struct.filters[$ _filter_name];
 	
 	if(!surface_exists(global.__colour_grader_lut_surface)) 
@@ -222,11 +280,19 @@ function colour_grader_editing_window(_active)
 {
 	if (_active)
 	{
+		
+		if (!variable_global_exists("__colour_grader_data_struct"))
+		or (!is_struct(global.__colour_grader_data_struct))
+		{
+			__colour_grader_init();
+		}
+		
 		if (!instance_exists(imgui))
 		{
 			instance_create_depth(0, 0, 0, imgui);
 			imguigml_add_font_from_ttf("pixel04b24.ttf", 12.0);	
 		}
+		
 		if (global.__colour_grader_data_struct.selected_filter == "")
 		{
 			var _filter = global.__colour_grader_data_struct.filters;
@@ -243,12 +309,11 @@ function colour_grader_editing_window(_active)
 		}
 		
 		imguigml_activate();
-		global.__colour_grader_data_struct.editing = _active;
+		global.__colour_grader_data_struct.editing = true;
 	}
 	else 
 	{
 		imguigml_deactivate();
-		global.__colour_grader_data_struct.editing = _active;
 		return _active;
 	}
 	
@@ -268,9 +333,10 @@ function colour_grader_editing_window(_active)
 	if (!ret[1])
 	{
 		imguigml_deactivate();
-		global.__colour_grader_data_struct.editing = _active;
 		return false;
 	}
+	
+	var _struct = global.__colour_grader_data_struct.filters[$ global.__colour_grader_data_struct.selected_filter];
 	
 	//==========================================================================
 	
@@ -278,9 +344,11 @@ function colour_grader_editing_window(_active)
 	
 	if (imguigml_begin_menu("file"))
 	{
-		imguigml_menu_item("new");
+		if (imguigml_menu_item("new"))
 		{
 			//open a box to name the new filter
+			global.__colour_grader_data_struct.create_new_filter = true;
+			global.__colour_grader_data_struct.create_new_filter_name = "";
 		}
 		
 		if (imguigml_menu_item("save"))
@@ -290,12 +358,12 @@ function colour_grader_editing_window(_active)
 		
 		if (imguigml_menu_item("load"))
 		{
-			__colour_grader_load_file();
+			global.__colour_grader_data_struct.filters = __colour_grader_load_file();
 		}
 		
 		if (imguigml_menu_item("delete"))
 		{
-			//open a box asking if you want to delete this current filter.
+			global.__colour_grader_data_struct.delete_current_filter = true;
 		}
 		
 		imguigml_end_menu(); 
@@ -303,17 +371,157 @@ function colour_grader_editing_window(_active)
 	
 	imguigml_end_menu_bar();
 
+	
+	if (global.__colour_grader_data_struct.create_new_filter)
+	{
+		var _input = imguigml_input_text("name of filter", global.__colour_grader_data_struct.create_new_filter_name, 100);
+		if(_input[0])
+		{
+			global.__colour_grader_data_struct.create_new_filter_name = _input[1];
+		}
 
+		var _valid_name = true;
+		var _new_filter_name = global.__colour_grader_data_struct.create_new_filter_name;
+		if (_new_filter_name == "")
+		{
+			_valid_name = false;
+		}
+		var _names = variable_struct_get_names(global.__colour_grader_data_struct.filters);
+		var _num = array_length(_names);
+		for (var _i = 0; _i < _num; _i++)
+		{
+			if (_new_filter_name == _names[_i])
+			{
+				_valid_name = false;
+			}
+		}
+		
+		if (_valid_name) {imguigml_text("Name is valid."); }	
+		else {imguigml_text("Name is not valid. (A filter name cannot be empty or the same as another filter name)"); }	
+			
+		if (imguigml_button("confirm"))
+		{
+			if (_valid_name)
+			{
+				global.__colour_grader_data_struct.filters[$ _new_filter_name] = __colour_grader_create_default_filter(_new_filter_name);
+				global.__colour_grader_data_struct.create_new_filter = false;
+				global.__colour_grader_data_struct.create_new_filter_name = "";
+				global.__colour_grader_data_struct.selected_filter = _new_filter_name;
+				
+			}
+		}
+		
+		
+		imguigml_same_line();
+		
+		if (imguigml_button("cancel"))
+		{
+			global.__colour_grader_data_struct.create_new_filter = false;
+			global.__colour_grader_data_struct.create_new_filter_name = "";
+		}
+		
+		return _active;
+	}
+	
+	
+	if (global.__colour_grader_data_struct.delete_current_filter)
+	{
+
+		imguigml_text("Are you sure you want to delete this filter: " + global.__colour_grader_data_struct.selected_filter); 	
+			
+		if (imguigml_button("confirm"))
+		{
+			variable_struct_remove(global.__colour_grader_data_struct.filters, global.__colour_grader_data_struct.selected_filter);
+			
+			if (variable_struct_names_count(global.__colour_grader_data_struct.filters) <= 0)
+			{
+				global.__colour_grader_data_struct.first_filter = __colour_grader_create_default_filter("first_filter");
+				global.__colour_grader_data_struct.selected_filter = "first_filter";
+				global.__colour_grader_data_struct.delete_current_filter = false;
+			}
+			else
+			{
+				var _names = variable_struct_get_names(global.__colour_grader_data_struct.filters);
+				global.__colour_grader_data_struct.selected_filter = _names[0];
+				global.__colour_grader_data_struct.delete_current_filter = false;
+			}
+		}
+		
+		
+		imguigml_same_line();
+		
+		if (imguigml_button("cancel"))
+		{
+			global.__colour_grader_data_struct.delete_current_filter = false;
+		}
+		
+		return _active;
+	}
+	
+
+	if (global.__colour_grader_data_struct.change_filter_name)
+	{
+		var _input = imguigml_input_text("change filter name", global.__colour_grader_data_struct.create_new_filter_name, 100);
+		if(_input[0])
+		{
+			global.__colour_grader_data_struct.create_new_filter_name = _input[1];
+		}
+
+		var _valid_name = true;
+		var _new_filter_name = global.__colour_grader_data_struct.create_new_filter_name;
+		if (_new_filter_name == "")
+		{
+			_valid_name = false;
+		}
+		var _names = variable_struct_get_names(global.__colour_grader_data_struct.filters);
+		var _num = array_length(_names);
+		for (var _i = 0; _i < _num; _i++)
+		{
+			if (_new_filter_name == _names[_i])
+			{
+				_valid_name = false;
+			}
+		}
+		
+		if (_valid_name) {imguigml_text("Name is valid."); }	
+		else {imguigml_text("Name is not valid. (A filter name cannot be empty or the same as another filter name)"); }	
+			
+		if (imguigml_button("confirm"))
+		{
+			if (_valid_name)
+			{
+				variable_struct_remove(global.__colour_grader_data_struct.filters, global.__colour_grader_data_struct.selected_filter);
+				_struct.name = _new_filter_name;
+				global.__colour_grader_data_struct.filters[$ _new_filter_name] = _struct;
+				global.__colour_grader_data_struct.selected_filter = _new_filter_name;
+				global.__colour_grader_data_struct.change_filter_name = false;
+			}
+		}
+		
+		
+		imguigml_same_line();
+		
+		if (imguigml_button("cancel"))
+		{
+			global.__colour_grader_data_struct.change_filter_name = false;
+			global.__colour_grader_data_struct.create_new_filter_name = "";
+		}
+		
+		
+		return _active;
+		
+	}
+	
 	//==========================================================================
 	
 	imguigml_text("select grading setup");
 	
-	var _struct = global.__colour_grader_data_struct.filters[$ global.__colour_grader_data_struct.selected_filter];
+
 	
 	if (imguigml_begin_combo("##select_premade", _struct.name))
 	{
 		var _filter = global.__colour_grader_data_struct.filters;
-		var _names = variable_struct_get_names(global.__colour_grader_data_struct.filters);
+		var _names = variable_struct_get_names(_filter);
 		var _num = array_length(_names);
 	
 		for (var _i = 0; _i < _num; _i++)
@@ -333,14 +541,13 @@ function colour_grader_editing_window(_active)
 
 	//==============================================================================
 
-	var _input = imguigml_input_text("change name",_struct.name, 1000);
-	if(_input[0])
+
+	if(imguigml_button("change name"))
 	{
-		variable_struct_remove(global.__colour_grader_data_struct.filters, _struct.name);
-		_struct.name = _input[1];
-		global.__colour_grader_data_struct.filters[$ _struct.name] = _struct;
-		global.__colour_grader_data_struct.selected_filter = _input[1];
+		global.__colour_grader_data_struct.change_filter_name = true;
 	}
+
+	
 	
 	imguigml_separator();
 	

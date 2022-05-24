@@ -1,4 +1,2 @@
-/*
-if(surface_exists(lut)) { surface_free(lut); }
 
-
+colour_grader_clean_up();
