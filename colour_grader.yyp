@@ -2,7 +2,7 @@
   "resources": [
     {"id":{"name":"background_example","path":"sprites/background_example/background_example.yy",},"order":1,},
     {"id":{"name":"imguigml_wrapper","path":"scripts/imguigml_wrapper/imguigml_wrapper.yy",},"order":3,},
-    {"id":{"name":"sLUT","path":"sprites/sLUT/sLUT.yy",},"order":2,},
+    {"id":{"name":"sLUT","path":"sprites/sLUT/sLUT.yy",},"order":3,},
     {"id":{"name":"imguigml_defines","path":"scripts/imguigml_defines/imguigml_defines.yy",},"order":2,},
     {"id":{"name":"extImGuiGML","path":"extensions/extImGuiGML/extImGuiGML.yy",},"order":3,},
     {"id":{"name":"shd_imgui_depth","path":"shaders/shd_imgui_depth/shd_imgui_depth.yy",},"order":1,},
@@ -16,8 +16,9 @@
     {"id":{"name":"shd_imgui","path":"shaders/shd_imgui/shd_imgui.yy",},"order":0,},
     {"id":{"name":"oColour_grader","path":"objects/oColour_grader/oColour_grader.yy",},"order":0,},
     {"id":{"name":"Room1","path":"rooms/Room1/Room1.yy",},"order":15,},
-    {"id":{"name":"sh_lut_vfx","path":"shaders/sh_lut_vfx/sh_lut_vfx.yy",},"order":2,},
-    {"id":{"name":"sh_lut_draw","path":"shaders/sh_lut_draw/sh_lut_draw.yy",},"order":1,},
+    {"id":{"name":"sh_lut_draw","path":"shaders/sh_lut_draw/sh_lut_draw.yy",},"order":2,},
+    {"id":{"name":"scr_colour_grader_functions","path":"scripts/scr_colour_grader_functions/scr_colour_grader_functions.yy",},"order":2,},
+    {"id":{"name":"sh_colour_grader","path":"shaders/sh_colour_grader/sh_colour_grader.yy",},"order":0,},
   ],
   "Options": [
     {"name":"Linux","path":"options/linux/options_linux.yy",},

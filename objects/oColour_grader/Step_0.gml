@@ -1,7 +1,13 @@
 
+if (keyboard_check_pressed(vk_f1))
+{
+	open_window = ! open_window;
+}
+open_window = colour_grader_editing_window(open_window);
+
 //==============================================================================
 
-
+/**
 if (keyboard_check_pressed(vk_f1))
 {
 	window_settings_active = !window_settings_active;
@@ -37,7 +43,9 @@ if (!imguigml_ready())
 
 imguigml_set_next_window_size(500, 600, EImGui_Cond.Once);
 imguigml_set_next_window_pos(140, 140, EImGui_Cond.Once);
-var ret = imguigml_begin("screen VFX", true);
+
+// 1024 is the menu bar flag.
+var ret = imguigml_begin("screen VFX", true, 1024);
 if (!ret[1])
 {
 	window_settings_active = false;
@@ -46,6 +54,24 @@ if (!ret[1])
 }
 
 //==============================================================================
+	
+	imguigml_begin_menu_bar();
+	
+	if (imguigml_begin_menu("file"))
+	{
+		imguigml_menu_item("new");
+		
+		if imguigml_menu_item("save")
+		{
+			
+		}
+		
+		imguigml_menu_item("load");
+		
+		imguigml_end_menu(); 
+	}
+	
+	imguigml_end_menu_bar();
 
 var _input = imguigml_button("save to file");
 if (_input)
@@ -281,4 +307,4 @@ imguigml_end();
 
 //==============================================================================
 //==============================================================================
-
+*/

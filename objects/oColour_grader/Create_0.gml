@@ -1,5 +1,5 @@
 // BASIC DOCUMENTATION
-
+show_debug_overlay(true);
 // oColour_grader needs ImGuiGML to work. If you don't have it already and its not included in this package, you can find it for free online :)
 // Rousr makes ImGuiGML.
 
@@ -22,7 +22,7 @@
 // Shout outs to Rousr for ImGuiGml, Juju for Directory pathing and Gaming Reverend for the original lut shader.  
 
 //==============================================================================
-  
+  /*
 if (file_exists(working_directory + "projectDirectoryPath"))
 {
 	var _buffer = buffer_load(working_directory + "projectDirectoryPath");
@@ -56,28 +56,29 @@ lut_strength = 1;
 u_lut_tex	= shader_get_sampler_index(sh_lut_draw, "lut_tex");
 
 
-//sh_lut_vfx
-exposure	= shader_get_uniform(sh_lut_vfx, "exposure");
+//sh_colour_grader
+strength	= shader_get_uniform(sh_colour_grader, "strength");
+exposure	= shader_get_uniform(sh_colour_grader, "exposure");
 exposure_level = 0;
-contrast	= shader_get_uniform(sh_lut_vfx, "contrast");
+contrast	= shader_get_uniform(sh_colour_grader, "contrast");
 contrast_level = 1;
-saturation	= shader_get_uniform(sh_lut_vfx, "saturation");
+saturation	= shader_get_uniform(sh_colour_grader, "saturation");
 saturation_level = 1;
 
-lut_color_filter = shader_get_uniform(sh_lut_vfx, "color_filter");
+lut_color_filter = shader_get_uniform(sh_colour_grader, "color_filter");
 lut_color_filter_array = [1,1,1];
 
-lut_vfx_shadows	= shader_get_uniform(sh_lut_vfx, "shadows");
+lut_vfx_shadows	= shader_get_uniform(sh_colour_grader, "shadows");
 
 lut_vfx_shadows_array = [1,1,1];
 
-lut_vfx_midtones	= shader_get_uniform(sh_lut_vfx, "midtones");
+lut_vfx_midtones	= shader_get_uniform(sh_colour_grader, "midtones");
 lut_vfx_midtones_array = [1,1,1];
 
-lut_vfx_hightlights	= shader_get_uniform(sh_lut_vfx, "highlights");
+lut_vfx_hightlights	= shader_get_uniform(sh_colour_grader, "highlights");
 lut_vfx_hightlights_array = [1,1,1];
 
-lut_vfx_SMHranges	= shader_get_uniform(sh_lut_vfx, "SMHranges");
+lut_vfx_SMHranges	= shader_get_uniform(sh_colour_grader, "SMHranges");
 lut_vfx_SMHranges_array = [0, 0.3, 0.55, 1];
 
 //==============================================================================
@@ -92,7 +93,7 @@ create_default_grading_struct = function()
 		lut_img                     : 0,
 		lut_img_array_index         : 0,
 		lut_strength                : 1,  
-		exposure_level              : 2,        
+		exposure_level              : 00,        
 		contrast_level              : 1,          
 		saturation_level            : 1,       
 		lut_color_filter_array      : [1,1,1],       
@@ -149,6 +150,7 @@ setup_lut_vfx = function()
 		surface_free(lut);
 	}
 }
+
 
 //==============================================================================
 
@@ -215,3 +217,8 @@ colour_grading_load_file = function(_file_directory)
 
 colour_grading_load_file(file_directory);
 window_settings_active = false;
+*/
+
+__colour_grader_init();
+
+open_window = true;

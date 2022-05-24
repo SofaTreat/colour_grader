@@ -1,6 +1,7 @@
 varying vec2 v_vTexcoord;
 varying vec4 v_vColour;
 
+uniform float strength;
 uniform float exposure;
 uniform float contrast;
 uniform float saturation;
@@ -19,9 +20,7 @@ void main()
 	vec4 base = v_vColour * texture2D(gm_BaseTexture, v_vTexcoord);
 	
 	vec3 colour = base.rgb;
-	
-	
-	
+
 	//exposure
 	colour *= pow(2.0, exposure);
 	
@@ -31,7 +30,6 @@ void main()
 	//colour filter
 	colour *= color_filter;
 	
-
 	float luminance = (colour.r * 0.3) + (colour.g * 0.59) + (colour.b * 0.11);
 	
 	//saturation
@@ -49,6 +47,8 @@ void main()
 	colour = colour * _SMHShadows * shadowsWeight +
 		colour * _SMHMidtones * midtonesWeight +
 		colour * _SMHHighlights * highlightsWeight;
+		
+	base.rgb = mix(base.rgb, colour, strength);
 	
-	gl_FragColor = vec4(colour, 1.0);
+	gl_FragColor = base;
 }

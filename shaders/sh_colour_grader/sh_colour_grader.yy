@@ -5,7 +5,7 @@
     "path": "folders/colour_grader/colour_grader_shaders.yy",
   },
   "resourceVersion": "1.0",
-  "name": "sh_lut_vfx",
+  "name": "sh_colour_grader",
   "tags": [],
   "resourceType": "GMShader",
 }
