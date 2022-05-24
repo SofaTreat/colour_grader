@@ -12,9 +12,13 @@ Four filters have been provided
 FILTER NAMES
 
 toxic
+
 bloodmachine
+
 frostmore
+
 vampireholiday
+
 
  press F1 to access the editing box.
 
