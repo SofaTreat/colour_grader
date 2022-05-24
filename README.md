@@ -2,23 +2,23 @@
 
  oColour_grader needs ImGuiGML to work. If you don't have it already and its not included in this package, you can find it for free online :)
  Rousr makes ImGuiGML.
-
+****
  How to use!
 
 Drag oColour_grader into your room in the room editor.
  set filter_name in the variable definitions to the name string of a filter you would like to use.  
 Four filters have been provided
-************
+===
 FILTER NAMES
-************
+===
 toxic
 bloodmachine
 frostmore
 vampireholiday
-************
+===
  press F1 to access the editing box.
 
-
+*****
 FUNCTIONS
 colour_grader_draw(_filter_name,[_surface], [_x], [_y])
 Takes the name of the filter as a string.
@@ -53,6 +53,7 @@ creates an editing window where you can create and edit filters.
 Dont forget to save any changes you have made!
 If you do not have imguigml in your project, you may want to go and delete this function.
 
+*****
  Directories!
  by default oColour_grader saves its data to the working_directory, I can't guarantee  the datas safety there so I would make backups. 
  You can find your colour_grading.data file in user -> appData -> local -> project name folder.
