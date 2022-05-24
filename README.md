@@ -8,14 +8,14 @@
 Drag oColour_grader into your room in the room editor.
  set filter_name in the variable definitions to the name string of a filter you would like to use.  
 Four filters have been provided
-===
+
 FILTER NAMES
-===
+
 toxic
 bloodmachine
 frostmore
 vampireholiday
-===
+
  press F1 to access the editing box.
 
 *****
