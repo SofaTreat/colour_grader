@@ -23,6 +23,7 @@ vampireholiday
  press F1 to access the editing box.
 
 FUNCTIONS
+
 colour_grader_draw(_filter_name,[_surface], [_x], [_y])
 Takes the name of the filter as a string.
 By default this will draw the application surface at x:0,y:0 with the colour grading shader.
