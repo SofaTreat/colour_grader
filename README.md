@@ -41,9 +41,9 @@ Takes the name of the filter as a string.
 By default this will draw the application surface at x:0,y:0 with the colour grading shader.
 Best to be called in a Draw GUI event. Unless you know what you are doing when it comes to surfaces. 
 The function does the colour filtering to a lut surface once, and then samples from that surface to apply the filter to the screen.
-Pros of this function over colour_grader_draw()
+1. Pros of this function over colour_grader_draw()
 - It's a possibly faster shader. Maybe.
-Cons
+2. Cons
 - You now have a surface to deal with which needs to be destoryed with colour_grader_clean_up(); Or you will have a memory leak.
 - You may get a slight amount of colour banding.
 
