@@ -25,8 +25,7 @@ vampireholiday
 
 FUNCTIONS
 
-colour_grader_draw(_filter_name,[_surface], [_x], [_y]) 
-
+```colour_grader_draw(_filter_name,[_surface], [_x], [_y]) ```
 Takes the name of the filter as a string.
 By default this will draw the application surface at x:0,y:0 with the colour grading shader.
 Best to be called in a Draw GUI event. Unless you know what you are doing when it comes to surfaces.
@@ -35,8 +34,7 @@ Best to be called in a Draw GUI event. Unless you know what you are doing when i
 
 
 
-colour_grader_lut_draw(_filter_name,[_surface], [_x], [_y]) 
-
+```colour_grader_lut_draw(_filter_name,[_surface], [_x], [_y]) ```
 Takes the name of the filter as a string.
 By default this will draw the application surface at x:0,y:0 with the colour grading shader.
 Best to be called in a Draw GUI event. Unless you know what you are doing when it comes to surfaces. 
