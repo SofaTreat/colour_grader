@@ -25,14 +25,18 @@ vampireholiday
 
 FUNCTIONS
 
-colour_grader_draw(_filter_name,[_surface], [_x], [_y]) \n
+colour_grader_draw(_filter_name,[_surface], [_x], [_y]) 
+
 Takes the name of the filter as a string.
 By default this will draw the application surface at x:0,y:0 with the colour grading shader.
 Best to be called in a Draw GUI event. Unless you know what you are doing when it comes to surfaces.
 
 
 
-colour_grader_lut_draw(_filter_name,[_surface], [_x], [_y]) \n
+
+
+colour_grader_lut_draw(_filter_name,[_surface], [_x], [_y]) 
+
 Takes the name of the filter as a string.
 By default this will draw the application surface at x:0,y:0 with the colour grading shader.
 Best to be called in a Draw GUI event. Unless you know what you are doing when it comes to surfaces. 
@@ -45,6 +49,7 @@ Cons
 
 
 
+
 colour_grader_clean_up()
 
 checks to see if colour_grader_lut_draw() has created a surface and frees it.
@@ -52,9 +57,13 @@ call this in a cleanup event to avoid any memory leaks.
 
 
 
+
+
 __colour_grader_trace_filter_names()
 
 This function prints out a list of filter names you have to the output log.
+
+
 
 
 
