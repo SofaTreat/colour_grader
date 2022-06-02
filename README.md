@@ -83,12 +83,13 @@ Dont forget to save any changes you have made!
 If you do not have imguigml in your project, you may want to go and delete this function.
 
 If you want to be able to close the window using the little x in the corner, then write it out like this:
+```
 if (keyboard_check_pressed(vk_f1))
 {
 	open_window = ! open_window;
 }
 open_window = colour_grader_editing_window(open_window);
-
+```
 
 *****
 
