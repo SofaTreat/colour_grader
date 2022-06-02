@@ -1,12 +1,12 @@
- BASIC DOCUMENTATION
+DOCUMENTATION
 
- oColour_grader needs ImGuiGML to work. If you don't have it already and its not included in this package, you can find it for free online :)
+ If you want to be able to edit, create, and delete filters then you need ImGuiGML. If you don't have it already, it is included in this package you can also find it for free online :)
 
- How to use!
+ HOW TO USE
 
 Drag oColour_grader into your room in the room editor.
- set filter_name in the variable definitions to the name string of a filter you would like to use.  
-Four filters have been provided
+ set filter_name in the variable definitions to the name of a filter (as a string) you would like to use.  
+Four filters have been provided.
 
 FILTER NAMES
 
@@ -19,15 +19,18 @@ frostmore
 vampireholiday
 
 
-
  press F1 to access the editing box.
+
+*****
 
 FUNCTIONS
 
 colour_grader_draw(_filter_name,[_surface], [_x], [_y])
 Takes the name of the filter as a string.
 By default this will draw the application surface at x:0,y:0 with the colour grading shader.
-Best to be called in a Draw GUI event. Unless you know what you are doing when it comes to surfaces. 
+Best to be called in a Draw GUI event. Unless you know what you are doing when it comes to surfaces.
+
+
 
 colour_grader_lut_draw(_filter_name,[_surface], [_x], [_y])
 Takes the name of the filter as a string.
@@ -40,16 +43,25 @@ Cons
 	* You now have a surface to deal with which needs to be destoryed with colour_grader_clean_up(); Or you will have a memory leak.
 	* You may get a slight amount of colour banding.
 
+
+
 colour_grader_clean_up()
 checks to see if colour_grader_lut_draw() has created a surface and frees it.
 call this in a cleanup event to avoid any memory leaks.
 
 
+
 __colour_grader_trace_filter_names()
 This function prints out a list of filter names you have to the output log.
 
+
+
 __colour_grader_init()
-sets up everything you need to run the colour gradering filter.
+sets up everything you need to run the colour gradering filter. 
+colour_grade_draw and colour_grader_lut_draw do both take care of this for you. 
+But you can run it in the create of something if you want to keep your draw step clean.
+
+
 
 
 colour_grader_editing_window(bool); NEEDS IMGUIGML TO WORK.
@@ -57,7 +69,16 @@ creates an editing window where you can create and edit filters.
 Dont forget to save any changes you have made!
 If you do not have imguigml in your project, you may want to go and delete this function.
 
+If you want to be able to close the window using the little x in the corner, then write it out like this:
+if (keyboard_check_pressed(vk_f1))
+{
+	open_window = ! open_window;
+}
+open_window = colour_grader_editing_window(open_window);
+
+
 *****
+
  Directories!
  by default oColour_grader saves its data to the working_directory, I can't guarantee  the datas safety there so I would make backups. 
  You can find your colour_grading.data file in user -> appData -> local -> project name folder.
