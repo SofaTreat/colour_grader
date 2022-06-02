@@ -10,13 +10,13 @@ Four filters have been provided.
 
 FILTER NAMES
 
-toxic
+"toxic"
 
-bloodmachine
+"bloodmachine"
 
-frostmore
+"frostmore"
 
-vampireholiday
+"vampireholiday"
 
 
  press F1 to access the editing box.
