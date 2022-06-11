@@ -1,3 +1,61 @@
+/*DOCUMENTATION
+
+If you want to be able to edit, create, and delete filters then you need ImGuiGML. If you don't have it already, it is included in this package you can also find it for free online :)
+
+HOW TO USE
+
+Drag oColour_grader into your room in the room editor. set filter_name in the variable definitions to the name of a filter (as a string) you would like to use.
+Four filters have been provided.
+
+FILTER NAMES
+
+"toxic"
+
+"bloodmachine"
+
+"frostmore"
+
+"vampireholiday"
+
+press F1 to access the editing box.
+
+FUNCTIONS
+colour_grader_draw(_filter_name,[_surface], [_x], [_y])
+Takes the name of the filter as a string. By default this will draw the application surface at x:0,y:0 with the colour grading shader. Best to be called in a Draw GUI event. Unless you know what you are doing when it comes to surfaces.
+
+colour_grader_lut_draw(_filter_name,[_surface], [_x], [_y])
+Takes the name of the filter as a string. By default this will draw the application surface at x:0,y:0 with the colour grading shader. Best to be called in a Draw GUI event. Unless you know what you are doing when it comes to surfaces. The function does the colour filtering to a lut surface once, and then samples from that surface to apply the filter to the screen.
+Pros of this function over colour_grader_draw()
+It's a possibly faster shader. Maybe.
+Cons
+You now have a surface to deal with which needs to be destoryed with colour_grader_clean_up(); Or you will have a memory leak.
+You may get a slight amount of colour banding.
+
+colour_grader_clean_up()
+checks to see if colour_grader_lut_draw() has created a surface and frees it. call this in a cleanup event to avoid any memory leaks.
+
+__colour_grader_trace_filter_names()
+This function prints out a list of filter names you have to the output log.
+
+__colour_grader_init()
+sets up everything you need to run the colour gradering filter. colour_grade_draw and colour_grader_lut_draw do both take care of this for you. But you can run it in the create of something if you want to keep your draw step clean.
+
+colour_grader_editing_window(bool); NEEDS IMGUIGML TO WORK.
+creates an editing window where you can create and edit filters. Dont forget to save any changes you have made! If you do not have imguigml in your project, you may want to go and delete this function.
+If you want to be able to close the window using the little x in the corner, then write it out like this:
+if (keyboard_check_pressed(vk_f1))
+{
+	open_window = ! open_window;
+}
+open_window = colour_grader_editing_window(open_window);
+
+
+Directories!
+by default oColour_grader saves its data to the working_directory, I can't guarantee the datas safety there so I would make backups. You can find your colour_grading.data file in user -> appData -> local -> project name folder. but if you want to save and load that file to and from the project directory, (ie to keep everything in a git repo) there is a file called "pre_run_step.bat" in the datafiles, move that into the project root folder to be able to save data into the project file. for this to work you need to turn off file sandboxing in the windows options of your project. This also only works for windows.
+
+Shout outs to Rousr for ImGuiGml, Juju for Directory pathing and Gaming Reverend for the original lut shader.
+*/
+
 
 function __colour_grader_init()
 {
@@ -23,6 +81,12 @@ function __colour_grader_init()
 		create_new_filter_name  : "",
 		delete_current_filter   : false,
 		change_filter_name      : false,
+		active_filter           : __colour_grader_create_default_filter(""),
+		lerp_filter             : __colour_grader_create_default_filter("lerp"),
+		filter_to_lerp_to       : "",
+		lerp_speed              : 1,
+		lerping_filter          : false,
+		lerp_timer              : 0,
 	}
 	
 	global.__colour_grader_data_struct = _colour_grader;
@@ -137,15 +201,122 @@ function  __colour_grader_create_default_filter(_name)
 	return _struct;
 }
 
+//==============================================================================
+
+function colour_grader_set_filter(_filter_name, _lerp_time_in_frames = 1)
+{
+	if (!variable_global_exists("__colour_grader_data_struct"))
+	or (!is_struct(global.__colour_grader_data_struct))
+	{
+		__colour_grader_init();
+	}
+	
+	global.__colour_grader_data_struct.filter_to_lerp_to = _filter_name;
+	global.__colour_grader_data_struct.lerp_speed = _lerp_time_in_frames;
+	global.__colour_grader_data_struct.lerping_filter = true;
+	global.__colour_grader_data_struct.lerp_timer = 0;
+
+	var _string, _name_array = variable_struct_get_names(global.__colour_grader_data_struct.active_filter);
+	var _num = array_length(_name_array);
+	for(var _i = 0; _i < _num; _i++)
+	{
+		_string = _name_array[_i];
+		if (_string == "name")
+		{
+			continue;
+		}
+		
+		if(is_array(global.__colour_grader_data_struct.active_filter[$ _string]))
+		{
+			var _array = global.__colour_grader_data_struct.active_filter[$ _string];
+			var _array_num = array_length(global.__colour_grader_data_struct.active_filter[$ _string]);
+			for(var _j = 0; _j < _array_num; _j++)
+			{
+				global.__colour_grader_data_struct.lerp_filter[$ _string][_j] = global.__colour_grader_data_struct.active_filter[$ _string][_j]; 
+			}
+		}
+		else
+		{
+			global.__colour_grader_data_struct.lerp_filter[$ _string] = global.__colour_grader_data_struct.active_filter[$ _string]; 
+		}
+	}
+	
+}
+
+function __colour_grader_lerp_to_filter() 
+{
+	var _struct = global.__colour_grader_data_struct;
+	var _filter_name = _struct.filter_to_lerp_to;
+	
+	//tests to see if this struct is a valid filter, hopefully throws a useful error.
+	if(!is_struct(_struct.filters[$ _filter_name]))
+	{
+		 __colour_grader_trace_filter_names();	
+		throw ("Invalid filter name string: A list of valid filter names has been printed in output log."); 
+	}
+	else
+	{
+		var _lerp_to_filter = _struct.filters[$ _filter_name];
+	}
+	
+	var lerp_from_filter = global.__colour_grader_data_struct.lerp_filter;
+	
+	var _lerp_speed = _struct.lerp_speed;
+	
+	if (_lerp_speed < 1)
+	{
+		_lerp_speed = 1;
+	}
+	
+	_struct.lerp_timer += 1/ _lerp_speed;
+	
+	if(_struct.lerp_timer >= 1)
+	{
+		_struct.lerp_timer = 1;
+	}
+	
+	_struct.active_filter.name = _lerp_to_filter.name;
+	
+	var _string, _name_array = variable_struct_get_names(_struct.active_filter);
+	var _num = array_length(_name_array);
+	for(var _i = 0; _i < _num; _i++)
+	{
+		_string = _name_array[_i];
+		if (_string == "name")
+		{
+			continue;
+		}
+		
+		if(is_array(_struct.active_filter[$ _string]))
+		{
+			var _array = _struct.active_filter[$ _string];
+			var _array_num = array_length(_struct.active_filter[$ _string]);
+			for(var _j = 0; _j < _array_num; _j++)
+			{
+				_struct.active_filter[$ _string][_j] = lerp(lerp_from_filter[$ _string][_j], _lerp_to_filter[$ _string][_j], _struct.lerp_timer); 
+			}
+		}
+		else
+		{
+			_struct.active_filter[$ _string] = lerp(lerp_from_filter[$ _string], _lerp_to_filter[$ _string], _struct.lerp_timer); 
+		}
+	}
+	
+	if(_struct.lerp_timer >= 1)
+	{
+		_struct.lerp_timer = 0;
+		_struct.lerping_filter = false;
+	}
+}
+
 
 //==============================================================================
 
-/// @param _filter_name  The name of the filter that you want to draw.  
 /// @param [_surface] The surface which you want to apply the filter too. Default is the appication_surface.  
 /// @param [_x]   the x position to draw the surface at. 
 /// @param [_y]   the y position to draw the surface at. 
 
-function colour_grader_draw(_filter_name, _surface = application_surface, _x = 0, _y = 0)
+function colour_grader_draw(_surface = application_surface, _x = 0, _y = 0)
 {
 	if (!variable_global_exists("__colour_grader_data_struct"))
 	or (!is_struct(global.__colour_grader_data_struct))
@@ -157,17 +328,19 @@ function colour_grader_draw(_filter_name, _surface = application_surface, _x = 0
 	
 	if(_struct.editing)
 	{
-		_filter_name = _struct.selected_filter;
+		var _filter_name = _struct.selected_filter;
+		var _filter = _struct.filters[$ _filter_name];
 	}
-	
-	//tests to see if this struct is a valid filter, hopefully throws a useful error.
-	if(!is_struct(_struct.filters[$ _filter_name]))
+	else
 	{
-		 __colour_grader_trace_filter_names();	
-		throw ("Invalid filter name string: A list of valid filter names has been printed in output log."); 
+		var _filter = _struct.active_filter;
 	}
 	
-	var _filter = _struct.filters[$ _filter_name];
+	
+	if (_struct.lerping_filter)
+	{
+		__colour_grader_lerp_to_filter();
+	}
 	
 	shader_set(sh_colour_grader);
 	shader_set_uniform_f(_struct.strength, _filter.strength); 
@@ -209,33 +382,40 @@ function __colour_grader_trace_filter_names()
 
 //==============================================================================
 
-function colour_grader_lut_draw(_filter_name, _surface = application_surface, _x = 0, _y = 0)
+/// @param [_surface] The surface which you want to apply the filter too. Default is the appication_surface.  
+/// @param [_x]   the x position to draw the surface at. 
+/// @param [_y]   the y position to draw the surface at. 
+
+function colour_grader_lut_draw(_surface = application_surface, _x = 0, _y = 0)
 {
 	if (!variable_global_exists("__colour_grader_data_struct"))
 	or (!is_struct(global.__colour_grader_data_struct))
 	{
 		__colour_grader_init();
 	}
+
 	
 	var _struct = global.__colour_grader_data_struct;
 	
 	if(_struct.editing)
 	{
-		_filter_name = _struct.selected_filter;
+		var _filter_name = _struct.selected_filter;
+		var _filter = _struct.filters[$ _filter_name];
 	}
-	
-	//tests to see if this struct is a valid filter, hopefully throws a useful error.
-	if(!is_struct(_struct.filters[$ _filter_name]))
+	else
 	{
-		 __colour_grader_trace_filter_names();	
-		throw ("Invalid filter name string: A list of valid filter names has been printed in output log."); 
+		var _filter = _struct.active_filter;
 	}
 	
-	var _filter = _struct.filters[$ _filter_name];
+	
+	if (_struct.lerping_filter)
+	{
+		__colour_grader_lerp_to_filter();
+	}
+	
 	
 	if(!surface_exists(global.__colour_grader_lut_surface)) 
 	{
-		
 		global.__colour_grader_lut_surface = surface_create(512,512); //sLUT;
 		surface_set_target(global.__colour_grader_lut_surface);
 		shader_set(sh_colour_grader);
@@ -280,7 +460,6 @@ function colour_grader_editing_window(_active)
 {
 	if (_active)
 	{
-		
 		if (!variable_global_exists("__colour_grader_data_struct"))
 		or (!is_struct(global.__colour_grader_data_struct))
 		{
@@ -293,27 +472,40 @@ function colour_grader_editing_window(_active)
 			imguigml_add_font_from_ttf("pixel04b24.ttf", 12.0);	
 		}
 		
-		if (global.__colour_grader_data_struct.selected_filter == "")
+		if (!global.__colour_grader_data_struct.editing)
 		{
-			var _filter = global.__colour_grader_data_struct.filters;
-			var _names = variable_struct_get_names(global.__colour_grader_data_struct.filters);
-			if (is_struct(_filter[$ _names[0]]))
+			if (global.__colour_grader_data_struct.active_filter.name == "")
 			{
-				global.__colour_grader_data_struct.selected_filter = _filter[$ _names[0]].name;
+				var _filter = global.__colour_grader_data_struct.filters;
+				var _names = variable_struct_get_names(global.__colour_grader_data_struct.filters);
+				if (is_struct(_filter[$ _names[0]]))
+				{
+					global.__colour_grader_data_struct.selected_filter = _filter[$ _names[0]].name;
+				}
+				else
+				{
+					global.__colour_grader_data_struct.first_filter = __colour_grader_create_default_filter("first_filter");
+					global.__colour_grader_data_struct.selected_filter = "first_filter";
+				}
 			}
 			else
 			{
-				global.__colour_grader_data_struct.first_filter = __colour_grader_create_default_filter("first_filter");
-				global.__colour_grader_data_struct.selected_filter = "first_filter";
+				global.__colour_grader_data_struct.selected_filter = global.__colour_grader_data_struct.active_filter.name;
 			}
 		}
 		
-		imguigml_activate();
 		global.__colour_grader_data_struct.editing = true;
+		
+		imguigml_activate();
 	}
 	else 
 	{
 		imguigml_deactivate();
+		if (global.__colour_grader_data_struct.editing)
+		{
+			colour_grader_set_filter(global.__colour_grader_data_struct.selected_filter, 1);
+		}
+		global.__colour_grader_data_struct.editing = false;
 		return _active;
 	}
 	
@@ -333,6 +525,11 @@ function colour_grader_editing_window(_active)
 	if (!ret[1])
 	{
 		imguigml_deactivate();
+		if (global.__colour_grader_data_struct.editing)
+		{
+			colour_grader_set_filter(global.__colour_grader_data_struct.selected_filter, 1);
+		}
+		global.__colour_grader_data_struct.editing = false;
 		return false;
 	}
 	

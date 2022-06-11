@@ -1,3 +1,3 @@
 
 
-colour_grader_draw(filter_name);
+colour_grader_draw();
