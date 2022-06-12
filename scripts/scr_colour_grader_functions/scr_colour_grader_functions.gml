@@ -87,6 +87,7 @@ function __colour_grader_init()
 		lerp_speed              : 1,
 		lerping_filter          : false,
 		lerp_timer              : 0,
+		redraw_lut_surface      : false,
 	}
 	
 	global.__colour_grader_data_struct = _colour_grader;
@@ -203,20 +204,40 @@ function  __colour_grader_create_default_filter(_name)
 
 //==============================================================================
 
+function colour_grader_get_filter()
+{
+	return 	global.__colour_grader_data_struct.active_filter.name;
+}
+
+//==============================================================================
+
 function colour_grader_set_filter(_filter_name, _lerp_time_in_frames = 1)
 {
+	//do we exist? if not self create!
 	if (!variable_global_exists("__colour_grader_data_struct"))
 	or (!is_struct(global.__colour_grader_data_struct))
 	{
 		__colour_grader_init();
 	}
 	
-	global.__colour_grader_data_struct.filter_to_lerp_to = _filter_name;
-	global.__colour_grader_data_struct.lerp_speed = _lerp_time_in_frames;
-	global.__colour_grader_data_struct.lerping_filter = true;
-	global.__colour_grader_data_struct.lerp_timer = 0;
+	var _struct = global.__colour_grader_data_struct;
+	//tests to see if this struct is a valid filter, if not will print a list of valid filters to your output log and throw an error.
+	if(!is_struct(_struct.filters[$ _filter_name]))
+	{
+		 __colour_grader_trace_filter_names();	
+		throw ("Invalid filter name string: A list of valid filter names has been printed in output log."); 
+	}
 
-	var _string, _name_array = variable_struct_get_names(global.__colour_grader_data_struct.active_filter);
+	//setup
+	_struct.filter_to_lerp_to = _filter_name;
+	_struct.lerp_speed = _lerp_time_in_frames;
+	_struct.lerping_filter = true;
+	_struct.lerp_timer = 0;
+	
+	_struct.active_filter.name = _filter_name;
+	
+	//copies the current filter settings over to the lerp_to_filter so we can lerp from that to the new filter.
+	var _string, _name_array = variable_struct_get_names(_struct.active_filter);
 	var _num = array_length(_name_array);
 	for(var _i = 0; _i < _num; _i++)
 	{
@@ -226,18 +247,17 @@ function colour_grader_set_filter(_filter_name, _lerp_time_in_frames = 1)
 			continue;
 		}
 		
-		if(is_array(global.__colour_grader_data_struct.active_filter[$ _string]))
+		if(is_array(_struct.active_filter[$ _string]))
 		{
-			var _array = global.__colour_grader_data_struct.active_filter[$ _string];
-			var _array_num = array_length(global.__colour_grader_data_struct.active_filter[$ _string]);
+			var _array_num = array_length(_struct.active_filter[$ _string]);
 			for(var _j = 0; _j < _array_num; _j++)
 			{
-				global.__colour_grader_data_struct.lerp_filter[$ _string][_j] = global.__colour_grader_data_struct.active_filter[$ _string][_j]; 
+				_struct.lerp_filter[$ _string][_j] = _struct.active_filter[$ _string][_j]; 
 			}
 		}
 		else
 		{
-			global.__colour_grader_data_struct.lerp_filter[$ _string] = global.__colour_grader_data_struct.active_filter[$ _string]; 
+			_struct.lerp_filter[$ _string] = _struct.active_filter[$ _string]; 
 		}
 	}
 	
@@ -246,23 +266,13 @@ function colour_grader_set_filter(_filter_name, _lerp_time_in_frames = 1)
 function __colour_grader_lerp_to_filter() 
 {
 	var _struct = global.__colour_grader_data_struct;
+	_struct.redraw_lut_surface = true;
 	var _filter_name = _struct.filter_to_lerp_to;
-	
-	//tests to see if this struct is a valid filter, hopefully throws a useful error.
-	if(!is_struct(_struct.filters[$ _filter_name]))
-	{
-		 __colour_grader_trace_filter_names();	
-		throw ("Invalid filter name string: A list of valid filter names has been printed in output log."); 
-	}
-	else
-	{
-		var _lerp_to_filter = _struct.filters[$ _filter_name];
-	}
-	
-	var lerp_from_filter = global.__colour_grader_data_struct.lerp_filter;
+
+	var _lerp_to_filter = _struct.filters[$ _filter_name];
+	var _lerp_from_filter = global.__colour_grader_data_struct.lerp_filter;
 	
 	var _lerp_speed = _struct.lerp_speed;
-	
 	if (_lerp_speed < 1)
 	{
 		_lerp_speed = 1;
@@ -275,7 +285,7 @@ function __colour_grader_lerp_to_filter()
 		_struct.lerp_timer = 1;
 	}
 	
-	_struct.active_filter.name = _lerp_to_filter.name;
+
 	
 	var _string, _name_array = variable_struct_get_names(_struct.active_filter);
 	var _num = array_length(_name_array);
@@ -289,16 +299,15 @@ function __colour_grader_lerp_to_filter()
 		
 		if(is_array(_struct.active_filter[$ _string]))
 		{
-			var _array = _struct.active_filter[$ _string];
 			var _array_num = array_length(_struct.active_filter[$ _string]);
 			for(var _j = 0; _j < _array_num; _j++)
 			{
-				_struct.active_filter[$ _string][_j] = lerp(lerp_from_filter[$ _string][_j], _lerp_to_filter[$ _string][_j], _struct.lerp_timer); 
+				_struct.active_filter[$ _string][_j] = lerp(_lerp_from_filter[$ _string][_j], _lerp_to_filter[$ _string][_j], _struct.lerp_timer); 
 			}
 		}
 		else
 		{
-			_struct.active_filter[$ _string] = lerp(lerp_from_filter[$ _string], _lerp_to_filter[$ _string], _struct.lerp_timer); 
+			_struct.active_filter[$ _string] = lerp(_lerp_from_filter[$ _string], _lerp_to_filter[$ _string], _struct.lerp_timer); 
 		}
 	}
 	
@@ -413,10 +422,12 @@ function colour_grader_lut_draw(_surface = application_surface, _x = 0, _y = 0)
 		__colour_grader_lerp_to_filter();
 	}
 	
-	
-	if(!surface_exists(global.__colour_grader_lut_surface)) 
+	if(global.__colour_grader_data_struct.redraw_lut_surface) 
 	{
-		global.__colour_grader_lut_surface = surface_create(512,512); //sLUT;
+		if(!surface_exists(global.__colour_grader_lut_surface))
+		{
+			global.__colour_grader_lut_surface = surface_create(512,512); //sLUT;
+		}
 		surface_set_target(global.__colour_grader_lut_surface);
 		shader_set(sh_colour_grader);
 		shader_set_uniform_f(_struct.strength, 1);
@@ -431,7 +442,7 @@ function colour_grader_lut_draw(_surface = application_surface, _x = 0, _y = 0)
 		draw_sprite(sLUT, 0, 0, 0);
 		shader_reset();
 		surface_reset_target();
-		
+		global.__colour_grader_data_struct.redraw_lut_surface = false;
 	}
 
 	gpu_set_tex_filter_ext(_struct.lut_tex, true);
@@ -727,7 +738,7 @@ function colour_grader_editing_window(_active)
 			if(_input[0])
 			{
 				global.__colour_grader_data_struct.selected_filter = _filter[$ _names[_i]].name;
-				colour_grader_clean_up();
+				global.__colour_grader_data_struct.redraw_lut_surface = true;
 				return _active;
 			}
 		}
@@ -758,7 +769,7 @@ function colour_grader_editing_window(_active)
 	if(_input[0])
 	{
 		_struct.strength = _input[1];
-		colour_grader_clean_up();
+		global.__colour_grader_data_struct.redraw_lut_surface = true;
 	}
 	
 	
@@ -768,7 +779,7 @@ function colour_grader_editing_window(_active)
 	if(_input[0])
 	{
 		_struct.exposure_level = _input[1];
-		colour_grader_clean_up();
+		global.__colour_grader_data_struct.redraw_lut_surface = true;
 	}
 		
 	var _min = 0;
@@ -777,7 +788,7 @@ function colour_grader_editing_window(_active)
 	if(_input[0])
 	{
 		_struct.contrast_level = _input[1];
-		colour_grader_clean_up();
+		global.__colour_grader_data_struct.redraw_lut_surface = true;
 	}	
 		
 	var _min = 0;
@@ -786,7 +797,7 @@ function colour_grader_editing_window(_active)
 	if(_input[0])
 	{
 		_struct.saturation_level = _input[1];
-		colour_grader_clean_up();
+		global.__colour_grader_data_struct.redraw_lut_surface = true;
 	}
 		
 	var _min = 0;
@@ -796,7 +807,7 @@ function colour_grader_editing_window(_active)
 	if(_input[0])
 	{
 		_struct.lut_color_filter_array = [_input[1],_input[2], _input[3]];
-		colour_grader_clean_up();
+		global.__colour_grader_data_struct.redraw_lut_surface = true;
 	}
 		
 	imguigml_separator();
@@ -808,7 +819,7 @@ function colour_grader_editing_window(_active)
 	if(_input[0])
 	{
 		_struct.lut_vfx_shadows_array = [_input[1],_input[2], _input[3]];
-		colour_grader_clean_up();
+		global.__colour_grader_data_struct.redraw_lut_surface = true;
 	}
 		
 	var _min = 0;
@@ -818,7 +829,7 @@ function colour_grader_editing_window(_active)
 	if(_input[0])
 	{
 		_struct.lut_vfx_midtones_array = [_input[1],_input[2], _input[3]];
-		colour_grader_clean_up();
+		global.__colour_grader_data_struct.redraw_lut_surface = true;
 	}
 		
 	var _min = 0;
@@ -828,7 +839,7 @@ function colour_grader_editing_window(_active)
 	if(_input[0])
 	{
 		_struct.lut_vfx_hightlights_array = [_input[1],_input[2], _input[3]];
-		colour_grader_clean_up();
+		global.__colour_grader_data_struct.redraw_lut_surface = true;
 	}
 		
 	var _min = 0;
@@ -838,7 +849,7 @@ function colour_grader_editing_window(_active)
 	if(_input[0])
 	{
 		_struct.lut_vfx_SMHranges_array = [_input[1],_input[2], _input[3], _input[4]];
-		colour_grader_clean_up();
+		global.__colour_grader_data_struct.redraw_lut_surface = true;
 	}
 	
 	imguigml_separator();
@@ -856,7 +867,7 @@ function colour_grader_editing_window(_active)
 		_struct.lut_vfx_shadows_array = [random(3), random(3), random(3)];
 		_struct.lut_vfx_midtones_array = [random(3), random(3), random(3)];
 		_struct.lut_vfx_hightlights_array = [random(3), random(3), random(3)];
-		colour_grader_clean_up();
+		global.__colour_grader_data_struct.redraw_lut_surface = true;
 	}	
 	
 	imguigml_same_line();
@@ -865,7 +876,7 @@ function colour_grader_editing_window(_active)
 	if (_input)
 	{
 		global.__colour_grader_data_struct.filters[$ global.__colour_grader_data_struct.selected_filter] = __colour_grader_create_default_filter(_struct.name);
-		colour_grader_clean_up();
+		global.__colour_grader_data_struct.redraw_lut_surface = true;
 	}	
 	
 	imguigml_separator();
