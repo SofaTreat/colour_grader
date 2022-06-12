@@ -22,11 +22,13 @@ Press F1 to access the editing box.
 FUNCTIONS
 
 ```colour_grader_set_filter(_filter_name, [_lerp_time_in_frames = 1])```
+
 Takes the name of the filter to wish to change to,
 and how long in frames you want the change to take. Default is 1 frame.
 
 
 ```colour_grader_get_filter()```
+
 //Returns the currect filter name as a string.
 
 
