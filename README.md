@@ -29,7 +29,7 @@ and how long in frames you want the change to take. Default is 1 frame.
 
 ```colour_grader_get_filter()```
 
-//Returns the currect filter name as a string.
+Returns the currect filter name as a string.
 
 
 ```colour_grader_draw([_surface], [_x], [_y]) ```
